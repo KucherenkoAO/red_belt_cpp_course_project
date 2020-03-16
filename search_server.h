@@ -2,26 +2,7 @@
 
 #include <istream>
 #include <ostream>
-#include <set>
-#include <list>
-#include <vector>
-#include <map>
-#include <string>
-using namespace std;
-
-class InvertedIndex {
-public:
-  void Add(const string& document);
-  list<size_t> Lookup(const string& word) const;
-
-  const string& GetDocument(size_t id) const {
-    return docs[id];
-  }
-
-private:
-  map<string, list<size_t>> index;
-  vector<string> docs;
-};
+#include <indexed_docs.h>
 
 class SearchServer {
 public:
@@ -31,5 +12,5 @@ public:
   void AddQueriesStream(istream& query_input, ostream& search_results_output);
 
 private:
-  InvertedIndex index;
+  IndexedDocs index;
 };
