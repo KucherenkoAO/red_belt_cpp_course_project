@@ -35,7 +35,7 @@ IndexedDocs::IndexedDocs()
     : chunks(CHUNKS_COUNT)
 {
     for (auto & ch : chunks)
-        ch.GetAccess().ref_to_value.reserve(50'000 / CHUNKS_COUNT + 1);
+        ch.GetAccess().ref_to_value.reserve(100'000 / CHUNKS_COUNT + 1);
 }
 
 

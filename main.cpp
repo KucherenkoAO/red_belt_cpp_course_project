@@ -209,108 +209,43 @@ void increaseContaoner(T& c, const int count) {
 }
 
 void TestSpeed() {
-  vector<string> docs = {
-      "london is the capital of great britain",
-      "paris is the capital of france",
-      "berlin is the capital of germany",
-      "rome is the capital of italy",
-      "madrid is the capital of spain",
-      "lisboa is the capital of portugal",
-      "bern is the capital of switzerland",
-      "moscow is the capital of russia",
-      "kiev is the capital of ukraine",
-      "minsk is the capital of belarus",
-      "astana is the capital of kazakhstan",
-      "beijing is the capital of china",
-      "tokyo is the capital of japan",
-      "bangkok is the capital of thailand",
-      "welcome to moscow the capital of russia the third rome",
-      "amsterdam is the capital of netherlands",
-      "helsinki is the capital of finland",
-      "oslo is the capital of norway",
-      "stockgolm is the capital of sweden",
-      "riga is the capital of latvia",
-      "tallin is the capital of estonia",
-      "warsaw is the capital of poland",
-      "london is the capital of great britain",
-      "paris is the capital of france",
-      "berlin is the capital of germany",
-      "rome is the capital of italy",
-      "madrid is the capital of spain",
-      "lisboa is the capital of portugal",
-      "bern is the capital of switzerland",
-      "moscow is the capital of russia",
-      "kiev is the capital of ukraine",
-      "minsk is the capital of belarus",
-      "astana is the capital of kazakhstan",
-      "beijing is the capital of china",
-      "tokyo is the capital of japan",
-      "bangkok is the capital of thailand",
-      "welcome to moscow the capital of russia the third rome",
-      "amsterdam is the capital of netherlands",
-      "helsinki is the capital of finland",
-      "oslo is the capital of norway",
-      "stockgolm is the capital of sweden",
-      "riga is the capital of latvia",
-      "tallin is the capital of estonia",
-      "warsaw is the capital of poland",
-      "paris is the capital of france",
-      "berlin is the capital of germany",
-      "rome is the capital of italy",
-      "madrid is the capital of spain",
-      "lisboa is the capital of portugal",
-      "bern is the capital of switzerland",
-      "moscow is the capital of russia",
-      "kiev is the capital of ukraine",
-      "minsk is the capital of belarus",
-      "astana is the capital of kazakhstan",
-      "beijing is the capital of china",
-      "tokyo is the capital of japan",
-      "bangkok is the capital of thailand",
-      "welcome to moscow the capital of russia the third rome",
-      "amsterdam is the capital of netherlands",
-      "helsinki is the capital of finland",
-      "oslo is the capital of norway",
-      "stockgolm is the capital of sweden",
-      "riga is the capital of latvia",
-      "tallin is the capital of estonia",
-      "warsaw is the capital of poland",
-      "london is the capital of great britain",
-      "paris is the capital of france",
-      "berlin is the capital of germany",
-      "rome is the capital of italy",
-      "madrid is the capital of spain",
-      "lisboa is the capital of portugal",
-      "bern is the capital of switzerland",
-      "moscow is the capital of russia",
-      "kiev is the capital of ukraine",
-      "minsk is the capital of belarus",
-      "astana is the capital of kazakhstan",
-      "beijing is the capital of china",
-      "tokyo is the capital of japan",
-      "bangkok is the capital of thailand",
-      "welcome to moscow the capital of russia the third rome",
-      "amsterdam is the capital of netherlands",
-      "helsinki is the capital of finland",
-      "oslo is the capital of norway",
-      "stockgolm is the capital of sweden",
-      "riga is the capital of latvia",
-      "tallin is the capital of estonia",
-      "warsaw is the capital of poland",
-  };
-  for (auto & s : docs)
-      increaseContaoner(s, 15);
+    fstream fin("input.txt");
+    vector<string> words;
+    if (string str; fin.is_open()) {
+        while(fin >> str) {
+            words.push_back(move(str));
+        }
+    }
+    else {
+        cout << "Can't open file" << endl;
+    }
+    increaseContaoner(words, 200);
+    DEBUGVAR(words.size());
 
-  increaseContaoner(docs, 100);
+    random_shuffle(words.begin(), words.end());
+    vector<string> docs(5'000);
+    int count = 0;
+    for (auto & doc : docs) {
+        while (++count % 100) {
+            doc.append(words[count]);
+            doc.push_back(' ');
+        }
+    }
 
-  vector<string> queries = {"moscow is the capital of russia", "capital", "the", "rome", "is the capital of the is is is"};
-  increaseContaoner(queries, 2);
+    random_shuffle(words.begin(), words.end());
+    vector<string> queries(SEARCH_THREAD_CAPACITY*5);
+    count = 1;
+    for (auto & query : queries) {
+        while (++count % 10) {
+            query.append(words[count]);
+            query.push_back(' ');
+        }
+    }
+    cout << "Create stringstreams" << endl;
+    istringstream docs_input(Join('\n', docs));
+    istringstream queries_input(Join('\n', queries));
 
-
-  istringstream docs_input(Join('\n', docs));
-  istringstream queries_input(Join('\n', queries));
-
-
+  cout << "Start" << endl;
   SearchServer srv;
   {
       LOG_DURATION("Build")
@@ -324,7 +259,6 @@ void TestSpeed() {
 }
 
 
-
 int main() {
   TestRunner tr;
   RUN_TEST(tr, TestSerpFormat);
@@ -333,4 +267,6 @@ int main() {
   RUN_TEST(tr, TestRanking);
   RUN_TEST(tr, TestBasicSearch);
   TestSpeed();
+
+    return 0;
 }

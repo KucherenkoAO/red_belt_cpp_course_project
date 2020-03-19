@@ -8,9 +8,6 @@
 #include <iostream>
 #include <future>
 
-const size_t FILL_THREAD_CAPACITY = 1'000;
-const size_t SEARCH_THREAD_CAPACITY = 2'000;
-
 void PushDocs(IndexedDocs & index, vector<string>&& str, size_t pos) {
     for (auto & s : str)
         index.Add(move(s), pos++);
@@ -46,22 +43,50 @@ void SearchServer::UpdateDocumentBase(istream& document_input) {
   index = move(new_index);
 }
 
+using Request = string;
+using AnswerForRequest = vector<pair<IndexedDocs::Relevation, size_t>>;
+using ThreadResult = vector<pair<Request, AnswerForRequest>>;
+
+ThreadResult AddSearchThread(IndexedDocs & id, vector<string> requests) {
+    ThreadResult result;
+    for (string & request : requests) {
+        auto words = SplitBy(request, ' ');
+        sort(words.begin(), words.end());
+        words.erase(unique(words.begin(), words.end()), words.end());
+        auto search_result = id.GetRelevationDocs(words);
+        auto head_search_result = Head(search_result, 5);
+        result.emplace_back(move(request), AnswerForRequest(head_search_result.begin(), head_search_result.end()));
+    }
+    return result;
+}
+
+
 void SearchServer::AddQueriesStream(
   istream& query_input, ostream& search_results_output
 ) {
-  for (string current_query; getline(query_input, current_query); ) {
-    auto words = SplitBy(current_query, ' ');
-    sort(words.begin(), words.end());
-    words.erase(unique(words.begin(), words.end()), words.end());
-    auto search_results = index.GetRelevationDocs(words);
-    search_results_output << current_query << ':';
-    for (auto [hitcount, docid] : Head(search_results, 5)) {
-      search_results_output << " {"
-        << "docid: " << docid << ", "
-        << "hitcount: " << hitcount << '}';
+    vector<string> requests;
+    requests.reserve(SEARCH_THREAD_CAPACITY);
+    vector<future<ThreadResult>> futures;
+    for (string current_query; getline(query_input, current_query); ) {
+        if (requests.size() < SEARCH_THREAD_CAPACITY)
+            requests.emplace_back(move(current_query));
+        else {
+            futures.push_back(async(AddSearchThread, ref(index), move(requests)));
+            requests.reserve(SEARCH_THREAD_CAPACITY);
+        }
     }
-    search_results_output << endl;
-  }
+    futures.push_back(async(AddSearchThread, ref(index), move(requests)));
+    for (auto & f : futures) {
+        for (auto & [request, answer] : f.get()) {
+            search_results_output << request << ':';
+            for (auto [hitcount, docid] : answer) {
+              search_results_output << " {"
+                << "docid: " << docid << ", "
+                << "hitcount: " << hitcount << '}';
+            }
+            search_results_output << endl;
+        }
+    }
 }
 
 
