@@ -11,11 +11,15 @@ string_view Strip(string_view s) {
 }
 
 vector<string_view> SplitBy(string_view s, char sep) {
+  s = Strip(s);
   vector<string_view> result;
   while (!s.empty()) {
     size_t pos = s.find(sep);
     result.push_back(s.substr(0, pos));
     s.remove_prefix(pos != s.npos ? pos + 1 : s.size());
+    while (!s.empty() && isspace(s.front())) {
+      s.remove_prefix(1);
+    }
   }
   return result;
 }

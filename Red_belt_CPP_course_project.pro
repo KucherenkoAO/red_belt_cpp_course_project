@@ -16,3 +16,6 @@ HEADERS += \
     profile.h \
     search_server.h \
     test_runner.h
+
+QMAKE_CXXFLAGS += -pthread
+LIBS += -pthread

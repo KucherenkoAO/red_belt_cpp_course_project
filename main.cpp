@@ -1,6 +1,7 @@
 #include "search_server.h"
 #include "parse.h"
 #include "test_runner.h"
+#include "profile.h"
 
 #include <algorithm>
 #include <iterator>
@@ -200,6 +201,130 @@ void TestBasicSearch() {
   TestFunctionality(docs, queries, expected);
 }
 
+template<typename T>
+void increaseContaoner(T& c, const int count) {
+    T c2 = c;
+    for (int i = 0; i < count; ++i)
+        copy(c2.begin(), c2.end(), back_inserter(c));
+}
+
+void TestSpeed() {
+  vector<string> docs = {
+      "london is the capital of great britain",
+      "paris is the capital of france",
+      "berlin is the capital of germany",
+      "rome is the capital of italy",
+      "madrid is the capital of spain",
+      "lisboa is the capital of portugal",
+      "bern is the capital of switzerland",
+      "moscow is the capital of russia",
+      "kiev is the capital of ukraine",
+      "minsk is the capital of belarus",
+      "astana is the capital of kazakhstan",
+      "beijing is the capital of china",
+      "tokyo is the capital of japan",
+      "bangkok is the capital of thailand",
+      "welcome to moscow the capital of russia the third rome",
+      "amsterdam is the capital of netherlands",
+      "helsinki is the capital of finland",
+      "oslo is the capital of norway",
+      "stockgolm is the capital of sweden",
+      "riga is the capital of latvia",
+      "tallin is the capital of estonia",
+      "warsaw is the capital of poland",
+      "london is the capital of great britain",
+      "paris is the capital of france",
+      "berlin is the capital of germany",
+      "rome is the capital of italy",
+      "madrid is the capital of spain",
+      "lisboa is the capital of portugal",
+      "bern is the capital of switzerland",
+      "moscow is the capital of russia",
+      "kiev is the capital of ukraine",
+      "minsk is the capital of belarus",
+      "astana is the capital of kazakhstan",
+      "beijing is the capital of china",
+      "tokyo is the capital of japan",
+      "bangkok is the capital of thailand",
+      "welcome to moscow the capital of russia the third rome",
+      "amsterdam is the capital of netherlands",
+      "helsinki is the capital of finland",
+      "oslo is the capital of norway",
+      "stockgolm is the capital of sweden",
+      "riga is the capital of latvia",
+      "tallin is the capital of estonia",
+      "warsaw is the capital of poland",
+      "paris is the capital of france",
+      "berlin is the capital of germany",
+      "rome is the capital of italy",
+      "madrid is the capital of spain",
+      "lisboa is the capital of portugal",
+      "bern is the capital of switzerland",
+      "moscow is the capital of russia",
+      "kiev is the capital of ukraine",
+      "minsk is the capital of belarus",
+      "astana is the capital of kazakhstan",
+      "beijing is the capital of china",
+      "tokyo is the capital of japan",
+      "bangkok is the capital of thailand",
+      "welcome to moscow the capital of russia the third rome",
+      "amsterdam is the capital of netherlands",
+      "helsinki is the capital of finland",
+      "oslo is the capital of norway",
+      "stockgolm is the capital of sweden",
+      "riga is the capital of latvia",
+      "tallin is the capital of estonia",
+      "warsaw is the capital of poland",
+      "london is the capital of great britain",
+      "paris is the capital of france",
+      "berlin is the capital of germany",
+      "rome is the capital of italy",
+      "madrid is the capital of spain",
+      "lisboa is the capital of portugal",
+      "bern is the capital of switzerland",
+      "moscow is the capital of russia",
+      "kiev is the capital of ukraine",
+      "minsk is the capital of belarus",
+      "astana is the capital of kazakhstan",
+      "beijing is the capital of china",
+      "tokyo is the capital of japan",
+      "bangkok is the capital of thailand",
+      "welcome to moscow the capital of russia the third rome",
+      "amsterdam is the capital of netherlands",
+      "helsinki is the capital of finland",
+      "oslo is the capital of norway",
+      "stockgolm is the capital of sweden",
+      "riga is the capital of latvia",
+      "tallin is the capital of estonia",
+      "warsaw is the capital of poland",
+  };
+  for (auto & s : docs)
+      increaseContaoner(s, 15);
+
+  increaseContaoner(docs, 100);
+
+  vector<string> queries = {"moscow is the capital of russia", "capital", "the", "rome", "is the capital of the is is is"};
+  increaseContaoner(queries, 2);
+
+
+  istringstream docs_input(Join('\n', docs));
+  istringstream queries_input(Join('\n', queries));
+
+
+  SearchServer srv;
+  {
+      LOG_DURATION("Build")
+      srv.UpdateDocumentBase(docs_input);
+  }
+  {
+      LOG_DURATION("Search")
+      ostringstream queries_output;
+      srv.AddQueriesStream(queries_input, queries_output);
+  }
+}
+
+
+
 int main() {
   TestRunner tr;
   RUN_TEST(tr, TestSerpFormat);
@@ -207,4 +332,5 @@ int main() {
   RUN_TEST(tr, TestHitcount);
   RUN_TEST(tr, TestRanking);
   RUN_TEST(tr, TestBasicSearch);
+  TestSpeed();
 }

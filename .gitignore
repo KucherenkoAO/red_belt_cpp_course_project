@@ -71,3 +71,7 @@ Thumbs.db
 *.dll
 *.exe
 
+# Archives
+*.tar
+*.zip
+*.rar
