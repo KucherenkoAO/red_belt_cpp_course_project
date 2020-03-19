@@ -5,7 +5,7 @@
 #include <indexed_docs.h>
 
 const size_t FILL_THREAD_CAPACITY = 2'000;
-const size_t SEARCH_THREAD_CAPACITY = 500;
+const size_t SEARCH_THREAD_CAPACITY = 2'500;
 
 class SearchServer {
 public:

@@ -58,8 +58,8 @@ private:
   size_t CHUNKS_COUNT = 50;
   using Chunk = vector<Doc_t>;
   mutable vector<Synchronized<Chunk>> chunks;
-  map<string_view, set<DocId>> docs_with_word;
+  map<string_view, vector<pair<DocId, size_t>>> docs_with_word;
   mutex docs_with_word_mutex;
-  set<DocId> zero_set;
-  const set<DocId> & DocWithWord(string_view word) const;
+  vector<pair<DocId, size_t>> zero_pair;
+  const vector<pair<DocId, size_t>> & DocWithWord(string_view word) const;
 };

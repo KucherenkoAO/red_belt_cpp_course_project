@@ -233,7 +233,7 @@ void TestSpeed() {
     }
 
     random_shuffle(words.begin(), words.end());
-    vector<string> queries(SEARCH_THREAD_CAPACITY*5);
+    vector<string> queries(SEARCH_THREAD_CAPACITY);
     count = 1;
     for (auto & query : queries) {
         while (++count % 10) {

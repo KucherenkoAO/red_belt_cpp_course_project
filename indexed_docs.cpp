@@ -35,7 +35,7 @@ IndexedDocs::IndexedDocs()
     : chunks(CHUNKS_COUNT)
 {
     for (auto & ch : chunks)
-        ch.GetAccess().ref_to_value.reserve(100'000 / CHUNKS_COUNT + 1);
+        ch.GetAccess().ref_to_value.reserve(50'000 / CHUNKS_COUNT + 1);
 }
 
 
@@ -63,38 +63,34 @@ void IndexedDocs::Add(string document, size_t num) {
   doc->CountWordsInDoc();
   lock_guard lg(docs_with_word_mutex);
   for (const auto &[word, count] : doc->words_in_doc)
-      docs_with_word[word].insert({cid, pos_in_chunk});
+      docs_with_word[word].push_back({{cid, pos_in_chunk}, count});
 }
 
-const set<IndexedDocs::DocId> & IndexedDocs::DocWithWord(string_view word) const {
+const vector<pair<IndexedDocs::DocId, size_t>> & IndexedDocs::DocWithWord(string_view word) const {
     if (auto it = docs_with_word.find(word); it != docs_with_word.end())
         return it->second;
     else
-        return zero_set;
+        return zero_pair;
 }
 
 vector<pair<IndexedDocs::Relevation, size_t>> IndexedDocs::GetRelevationDocs(const vector<string_view> & words) const {
-    set<DocId> id_interesting_docs;
+    map<DocId, size_t> id_interesting_docs;
     for (auto word : words) {
-        for (auto id : DocWithWord(word)) {
-            id_interesting_docs.insert(id);
+        for (auto [docid, count_word] : DocWithWord(word)) {
+            id_interesting_docs[docid] += count_word;
         }
     }
 
-    auto cmp = [](pair<Relevation, size_t> lhs, pair<Relevation, size_t> rhs) {
+    vector<pair<Relevation, size_t>> relevation_docs;
+    for (auto [docid, relevation] : id_interesting_docs)
+        relevation_docs.push_back({relevation, chunks[docid.first].GetAccess().ref_to_value[docid.second].doc_num});
+
+    sort(relevation_docs.begin(), relevation_docs.end(), [](pair<Relevation, size_t> & lhs, pair<Relevation, size_t> & rhs) {
         if (lhs.first != rhs.first)
-            return lhs.first < rhs.first;
+            return lhs.first > rhs.first;
         else
-            return lhs.second > rhs.second;
-    };
+            return lhs.second < rhs.second;
+    });
 
-    set<pair<Relevation, size_t>, decltype (cmp)> relevation_docs(cmp);
-
-    for (auto id : id_interesting_docs) {
-        auto & doc = chunks[id.first].GetAccess().ref_to_value[id.second];
-        relevation_docs.insert(
-        {doc.CalculateRelevation(words),
-         doc.doc_num});
-    }
-    return {make_move_iterator(relevation_docs.rbegin()), make_move_iterator(relevation_docs.rend())};
+    return relevation_docs;
 }

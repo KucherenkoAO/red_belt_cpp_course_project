@@ -84,7 +84,7 @@ void SearchServer::AddQueriesStream(
                 << "docid: " << docid << ", "
                 << "hitcount: " << hitcount << '}';
             }
-            search_results_output << endl;
+            search_results_output << '\n';
         }
     }
 }
