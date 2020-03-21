@@ -58,11 +58,12 @@ public:
     explicit SearchServer(istream& document_input);
     void UpdateDocumentBase(istream& document_input);
     void AddQueriesStream(istream& query_input, ostream& search_results_output);
+    void WaitEndsFutures() const;
 
 private:
     void UpdateDocumentBaseThread(istream& document_input);
     void QueriesStreamThread(istream& query_input, ostream& search_results_output);
     Synchronized<shared_ptr<InvertedIndex>> index;
     bool is_first_db_update = true;
-    Synchronized<deque<future<void>>> futures;
+    mutable Synchronized<vector<future<void>>> futures;
 };

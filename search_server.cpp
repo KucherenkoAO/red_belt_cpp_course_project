@@ -94,6 +94,14 @@ void SearchServer::QueriesStreamThread(
   }
 }
 
+void SearchServer::WaitEndsFutures() const {
+    auto synchro_futures = futures.GetAccess();
+    for (auto & f : synchro_futures.ref_to_value)
+        f.get();
+    synchro_futures.ref_to_value.clear();
+}
+
+
 void InvertedIndex::Add(string document) {
   docs.push_back(move(document));
 

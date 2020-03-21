@@ -28,7 +28,7 @@ void TestFunctionality(
   srv.UpdateDocumentBase(docs_input);
   ostringstream queries_output;
   srv.AddQueriesStream(queries_input, queries_output);
-  sleep(1);
+  srv.WaitEndsFutures();
   const string result = queries_output.str();
   const auto lines = SplitBy(Strip(result), '\n');
   ASSERT_EQUAL(lines.size(), expected.size());
@@ -257,6 +257,7 @@ void TestSpeed() {
       LOG_DURATION("Search")
       ostringstream queries_output;
       srv.AddQueriesStream(queries_input, queries_output);
+      srv.WaitEndsFutures();
   }
 }
 
