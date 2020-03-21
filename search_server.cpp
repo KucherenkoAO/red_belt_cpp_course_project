@@ -13,24 +13,21 @@ vector<string> SplitIntoWords(const string& line) {
 }
 
 SearchServer::SearchServer(istream& document_input) {
+  is_first_db_update = false;
   UpdateDocumentBaseThread(document_input);
-  for (auto & f : futures) {
-      f = async([](){return;});
-  }
 }
 
 void SearchServer::UpdateDocumentBase(istream& document_input) {
-    bool need_to_serv = true;
-    while (need_to_serv) {
-        for (auto & f : futures) {
-            if (f.wait_for(std::chrono::milliseconds(0)) == future_status::ready) {
-                f = async(&SearchServer::UpdateDocumentBaseThread, this, ref(document_input));
-                need_to_serv = false;
-            }
-        }
+    if (is_first_db_update) {
+        is_first_db_update = false;
+        UpdateDocumentBaseThread(document_input);
+    }
+    else {
+        futures.GetAccess().ref_to_value.push_back(
+            async(std::launch::async, &SearchServer::UpdateDocumentBaseThread, this, ref(document_input))
+        );
     }
 }
-
 
 void SearchServer::UpdateDocumentBaseThread(istream& document_input) {
   auto new_index = make_shared<InvertedIndex>();
@@ -39,30 +36,24 @@ void SearchServer::UpdateDocumentBaseThread(istream& document_input) {
     new_index->Add(move(current_document));
   }
 
-  index = new_index;
+  index.GetAccess().ref_to_value = new_index;
 }
+
 
 void SearchServer::AddQueriesStream(
   istream& query_input, ostream& search_results_output
 ) {
-    bool need_to_serv = true;
-    while (need_to_serv) {
-        for (auto & f : futures) {
-            if (f.wait_for(std::chrono::milliseconds(0)) == future_status::ready) {
-                f = async(&SearchServer::ServQueriesThread, this, ref(query_input), ref(search_results_output));
-                need_to_serv = false;
-            }
-        }
-    }
+    futures.GetAccess().ref_to_value.push_back(
+        async(std::launch::async, &SearchServer::QueriesStreamThread, this, ref(query_input), ref(search_results_output))
+    );
 }
 
-
-
-void SearchServer::ServQueriesThread(
+void SearchServer::QueriesStreamThread(
   istream& query_input, ostream& search_results_output
 ) {
+  auto current_index = index.GetAccess().ref_to_value;
   for (string current_query; getline(query_input, current_query); ) {
-      auto current_index = index;
+
       map<string, size_t> words;
       for (auto & word : SplitIntoWords(current_query))
           ++words[move(word)];
