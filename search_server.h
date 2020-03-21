@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <memory>
+
 using namespace std;
 
 class InvertedIndex {
@@ -33,5 +35,5 @@ public:
   void AddQueriesStream(istream& query_input, ostream& search_results_output);
 
 private:
-  InvertedIndex index;
+  shared_ptr<InvertedIndex> index;
 };

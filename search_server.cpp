@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 
+
 vector<string> SplitIntoWords(const string& line) {
   istringstream words_input(line);
   return {istream_iterator<string>(words_input), istream_iterator<string>()};
@@ -16,13 +17,13 @@ SearchServer::SearchServer(istream& document_input) {
 }
 
 void SearchServer::UpdateDocumentBase(istream& document_input) {
-  InvertedIndex new_index;
+  auto new_index = make_shared<InvertedIndex>();
 
   for (string current_document; getline(document_input, current_document); ) {
-    new_index.Add(move(current_document));
+    new_index->Add(move(current_document));
   }
 
-  index = move(new_index);
+  index = new_index;
 }
 
 void SearchServer::AddQueriesStream(
@@ -34,9 +35,9 @@ void SearchServer::AddQueriesStream(
       for (auto & word : SplitIntoWords(current_query))
           ++words[move(word)];
 
-    vector<size_t> docid_count(index.GetDocsCount());
+    vector<size_t> docid_count(index->GetDocsCount());
     for (const auto& [word, count_word] : words) {
-      for (const size_t docid : index.Lookup(word)) {
+      for (const size_t docid : index->Lookup(word)) {
         docid_count[docid] += count_word;
       }
     }
