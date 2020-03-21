@@ -13,10 +13,26 @@ vector<string> SplitIntoWords(const string& line) {
 }
 
 SearchServer::SearchServer(istream& document_input) {
-  UpdateDocumentBase(document_input);
+  UpdateDocumentBaseThread(document_input);
+  for (auto & f : futures) {
+      f = async([](){return;});
+  }
 }
 
 void SearchServer::UpdateDocumentBase(istream& document_input) {
+    bool need_to_serv = true;
+    while (need_to_serv) {
+        for (auto & f : futures) {
+            if (f.wait_for(std::chrono::milliseconds(0)) == future_status::ready) {
+                f = async(&SearchServer::UpdateDocumentBaseThread, this, ref(document_input));
+                need_to_serv = false;
+            }
+        }
+    }
+}
+
+
+void SearchServer::UpdateDocumentBaseThread(istream& document_input) {
   auto new_index = make_shared<InvertedIndex>();
 
   for (string current_document; getline(document_input, current_document); ) {
@@ -29,15 +45,31 @@ void SearchServer::UpdateDocumentBase(istream& document_input) {
 void SearchServer::AddQueriesStream(
   istream& query_input, ostream& search_results_output
 ) {
-  for (string current_query; getline(query_input, current_query); ) {
+    bool need_to_serv = true;
+    while (need_to_serv) {
+        for (auto & f : futures) {
+            if (f.wait_for(std::chrono::milliseconds(0)) == future_status::ready) {
+                f = async(&SearchServer::ServQueriesThread, this, ref(query_input), ref(search_results_output));
+                need_to_serv = false;
+            }
+        }
+    }
+}
 
+
+
+void SearchServer::ServQueriesThread(
+  istream& query_input, ostream& search_results_output
+) {
+  for (string current_query; getline(query_input, current_query); ) {
+      auto current_index = index;
       map<string, size_t> words;
       for (auto & word : SplitIntoWords(current_query))
           ++words[move(word)];
 
-    vector<size_t> docid_count(index->GetDocsCount());
+    vector<size_t> docid_count(current_index->GetDocsCount());
     for (const auto& [word, count_word] : words) {
-      for (const size_t docid : index->Lookup(word)) {
+      for (const size_t docid : current_index->Lookup(word)) {
         docid_count[docid] += count_word;
       }
     }

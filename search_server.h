@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <future>
 
 using namespace std;
 
@@ -29,11 +30,16 @@ private:
 
 class SearchServer {
 public:
-  SearchServer() = default;
-  explicit SearchServer(istream& document_input);
-  void UpdateDocumentBase(istream& document_input);
-  void AddQueriesStream(istream& query_input, ostream& search_results_output);
+    SearchServer() = default;
+    explicit SearchServer(istream& document_input);
+    void UpdateDocumentBaseThread(istream& document_input);
+    void UpdateDocumentBase(istream& document_input);
+    void ServQueriesThread(istream& query_input, ostream& search_results_output);
+    void AddQueriesStream(istream& query_input, ostream& search_results_output);
 
 private:
-  shared_ptr<InvertedIndex> index;
+    array<future<void>, 4> futures;
+    shared_ptr<InvertedIndex> index;
 };
+
+

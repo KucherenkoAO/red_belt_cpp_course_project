@@ -12,6 +12,8 @@
 #include <fstream>
 #include <random>
 #include <thread>
+#include <future>
+#include <mutex>
 using namespace std;
 
 void TestFunctionality(
@@ -23,9 +25,9 @@ void TestFunctionality(
   istringstream queries_input(Join('\n', queries));
 
   SearchServer srv;
-  srv.UpdateDocumentBase(docs_input);
+  srv.UpdateDocumentBaseThread(docs_input);
   ostringstream queries_output;
-  srv.AddQueriesStream(queries_input, queries_output);
+  srv.ServQueriesThread(queries_input, queries_output);
 
   const string result = queries_output.str();
   const auto lines = SplitBy(Strip(result), '\n');
@@ -233,7 +235,7 @@ void TestSpeed() {
     }
 
     random_shuffle(words.begin(), words.end());
-    vector<string> queries(10'000);
+    vector<string> queries(5'000);
     count = 1;
     for (auto & query : queries) {
         while (++count % 10) {
@@ -249,24 +251,26 @@ void TestSpeed() {
   SearchServer srv;
   {
       LOG_DURATION("Build")
-      srv.UpdateDocumentBase(docs_input);
+      srv.UpdateDocumentBaseThread(docs_input);
   }
   {
       LOG_DURATION("Search")
       ostringstream queries_output;
-      srv.AddQueriesStream(queries_input, queries_output);
+      srv.ServQueriesThread(queries_input, queries_output);
   }
 }
 
 
 int main() {
-  TestRunner tr;
-  RUN_TEST(tr, TestSerpFormat);
-  RUN_TEST(tr, TestTop5);
-  RUN_TEST(tr, TestHitcount);
-  RUN_TEST(tr, TestRanking);
-  RUN_TEST(tr, TestBasicSearch);
-  TestSpeed();
-
+    TestRunner tr;
+    RUN_TEST(tr, TestSerpFormat);
+    RUN_TEST(tr, TestTop5);
+    RUN_TEST(tr, TestHitcount);
+    RUN_TEST(tr, TestRanking);
+    RUN_TEST(tr, TestBasicSearch);
+    TestSpeed();
+//    future<void> f;
+//    f = async([](){return;});
+//    cout << (f.wait_for(chrono::milliseconds(0)) == future_status::ready) << endl;
     return 0;
 }
