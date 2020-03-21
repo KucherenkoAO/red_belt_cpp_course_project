@@ -4,13 +4,11 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-        indexed_docs.cpp \
         main.cpp \
         parse.cpp \
         search_server.cpp
 
 HEADERS += \
-    indexed_docs.h \
     iterator_range.h \
     parse.h \
     profile.h \

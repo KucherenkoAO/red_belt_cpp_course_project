@@ -2,10 +2,28 @@
 
 #include <istream>
 #include <ostream>
-#include <indexed_docs.h>
+#include <vector>
+#include <map>
+#include <string>
+using namespace std;
 
-const size_t FILL_THREAD_CAPACITY = 2'000;
-const size_t SEARCH_THREAD_CAPACITY = 2'500;
+class InvertedIndex {
+public:
+  void Add(string document);
+  const vector<size_t> & Lookup(const string& word) const;
+
+  const string& GetDocument(size_t id) const {
+    return docs[id];
+  }
+  size_t GetDocsCount() const {
+      return docs.size();
+  }
+
+private:
+  map<string, vector<size_t>> index;
+  vector<string> docs;
+  vector<size_t> empty_vector;
+};
 
 class SearchServer {
 public:
@@ -15,5 +33,5 @@ public:
   void AddQueriesStream(istream& query_input, ostream& search_results_output);
 
 private:
-  IndexedDocs index;
+  InvertedIndex index;
 };
